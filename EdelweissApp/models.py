@@ -3,6 +3,7 @@ from django.db import models
 from django.utils import timezone
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils.safestring import mark_safe
+import os
 
 # Niveaux de Difficulté
 class DifficultyLevel(models.IntegerChoices):
@@ -55,6 +56,10 @@ class Hike(models.Model):
     def publish(self):
         self.published_date = timezone.now()
         self.save()
+
+    def delete(self, *args, **kwargs):
+        os.remove(os.path.join(settings.MEDIA_ROOT, self.thumbnail.name))
+        super(Hike, self).delete(*args, **kwargs)
 
     def __str__(self):
         return self.title
