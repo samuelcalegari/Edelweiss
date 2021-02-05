@@ -3,7 +3,7 @@ from django.db import models
 from django.utils import timezone
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils.safestring import mark_safe
-import os
+import os, sys
 
 # Niveaux de Difficulté
 class DifficultyLevel(models.IntegerChoices):
@@ -13,6 +13,7 @@ class DifficultyLevel(models.IntegerChoices):
     HARD = 3, 'Hard'
     VERYHARD = 4, 'Very Hard'
 
+# Types de Randonnée
 class HikeType(models.IntegerChoices):
     PEDESTRIAN = 0, 'Pedestrian'
     TRAIL = 1, 'Trail'
@@ -39,19 +40,19 @@ class Hike(models.Model):
     loop = models.BooleanField(default=True)
     positiveElevation = models.IntegerField(default=0)
     negativeElevation = models.IntegerField(default=0)
-    cumulativeElevation = models.IntegerField(default=0)
+    negativeElevation = models.IntegerField(default=0)
     latitude = models.DecimalField(max_digits=11, decimal_places=7, null=True, blank=True)
     longitude = models.DecimalField(max_digits=11, decimal_places=7, null=True, blank=True)
     published = models.BooleanField(default=False)
     created_date = models.DateTimeField(default=timezone.now)
     published_date = models.DateTimeField(blank=True, null=True)
-    thumbnail = models.ImageField(upload_to='media/', default='images/no-img.png')
+    thumbnail = models.ImageField(upload_to='img' + os.sep + 'hikes' + os.sep, default='', blank=True)
 
     @property
     def thumbnail_preview(self):
         if self.thumbnail:
             return mark_safe('<img src="{}" width="300" height="300" />'.format(self.thumbnail.url))
-        return ""
+        return mark_safe('<img src="/media/img/no-img.png" width="300" height="300" />')
 
     def publish(self):
         self.published_date = timezone.now()
@@ -63,3 +64,24 @@ class Hike(models.Model):
 
     def __str__(self):
         return self.title
+
+# Modèle Point d'Interets
+
+class PointsOfInterest(models.Model):
+    hike = models.ForeignKey(Hike, on_delete=models.CASCADE, null=True, verbose_name='Hike')
+    title = models.CharField(max_length=200)
+    text = models.TextField()
+    latitude = models.DecimalField(max_digits=11, decimal_places=7, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=11, decimal_places=7, null=True, blank=True)
+    published = models.BooleanField(default=False)
+    thumbnail = models.ImageField(upload_to='img' + os.sep + 'poi' + os.sep, default='', blank=True)
+
+    @property
+    def thumbnail_preview(self):
+        if self.thumbnail:
+            return mark_safe('<img src="{}" width="300" height="300" />'.format(self.thumbnail.url))
+        return mark_safe('<img src="/media/img/no-img.png" width="300" height="300" />')
+
+    def delete(self, *args, **kwargs):
+        os.remove(os.path.join(settings.MEDIA_ROOT, self.thumbnail.name))
+        super(PointsOfInterest, self).delete(*args, **kwargs)
