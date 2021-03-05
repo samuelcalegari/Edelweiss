@@ -3,7 +3,8 @@ from django.db import models
 from django.utils import timezone
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils.safestring import mark_safe
-import os, sys
+import os
+import sys
 
 # Niveaux de Difficulté
 class DifficultyLevel(models.IntegerChoices):
@@ -25,7 +26,8 @@ class HikeType(models.IntegerChoices):
     CANOE = 7, 'Canoe / Kayak'
     SNORKELING = 8, 'Snorkeling'
 
-# Modèle Randonées
+# Modèle Randonnées
+
 class Hike(models.Model):
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     title = models.CharField(max_length=200)
@@ -59,7 +61,9 @@ class Hike(models.Model):
         self.save()
 
     def delete(self, *args, **kwargs):
-        os.remove(os.path.join(settings.MEDIA_ROOT, self.thumbnail.name))
+        print("Delete Item Hike", file=sys.stderr)
+        # os.remove(os.path.join(settings.MEDIA_ROOT, self.thumbnail.name))
+        self.thumbnail.storage.delete(self.thumbnail.name)
         super(Hike, self).delete(*args, **kwargs)
 
     def __str__(self):
@@ -83,5 +87,28 @@ class PointsOfInterest(models.Model):
         return mark_safe('<img src="/media/img/no-img.png" width="300" height="300" />')
 
     def delete(self, *args, **kwargs):
-        os.remove(os.path.join(settings.MEDIA_ROOT, self.thumbnail.name))
+        print("Delete Item POI", file=sys.stderr)
+        # os.remove(os.path.join(settings.MEDIA_ROOT, self.thumbnail.name))
+        self.thumbnail.storage.delete(self.thumbnail.name)
         super(PointsOfInterest, self).delete(*args, **kwargs)
+
+# Modèle Badges
+
+class Badge(models.Model):
+    title = models.CharField(max_length=200)
+    text = models.TextField()
+    points = models.IntegerField()
+    published = models.BooleanField(default=False)
+    thumbnail = models.ImageField(upload_to='img' + os.sep + 'badges' + os.sep, default='', blank=True)
+
+    @property
+    def thumbnail_preview(self):
+        if self.thumbnail:
+            return mark_safe('<img src="{}" width="300" height="300" />'.format(self.thumbnail.url))
+        return mark_safe('<img src="/media/img/no-img.png" width="300" height="300" />')
+
+    def delete(self, *args, **kwargs):
+        print("Delete Item Badge", file=sys.stderr)
+        #os.remove(os.path.join(settings.MEDIA_ROOT, self.thumbnail.name))
+        self.thumbnail.storage.delete(self.thumbnail.name)
+        super(Badge, self).delete(*args, **kwargs)
