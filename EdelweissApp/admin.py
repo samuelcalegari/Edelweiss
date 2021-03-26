@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import *
 
+# Disable delete from list
 admin.site.disable_action('delete_selected')
 
 # Register your models here.
@@ -43,19 +44,11 @@ class BadgeAdmin(admin.ModelAdmin):
 
 admin.site.register(Badge, BadgeAdmin)
 
-'''
-class PointsOfInterestAdmin(admin.ModelAdmin):
-    list_display = ('id', 'title','thumbnail_preview')
-    readonly_fields = ('thumbnail_preview',)
 
-    def thumbnail_preview(self, obj):
-        return obj.thumbnail_preview
+# FavoriteHike
+class FavoriteHikeAdmin(admin.ModelAdmin):
+    list_display = ('user','hike')
 
-    thumbnail_preview.short_description = 'Thumbnail Preview'
-    thumbnail_preview.allow_tags = True
-    
-admin.site.register(PointsOfInterest, PointsOfInterestAdmin)
-'''
-
+admin.site.register(FavoriteHike, FavoriteHikeAdmin)
 
 
