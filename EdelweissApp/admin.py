@@ -17,8 +17,12 @@ class PointsOfInterestInline(admin.TabularInline):
 
 # Hikes
 class HikeAdmin(admin.ModelAdmin):
-    list_display = ('title','thumbnail_preview')
+    list_display = ('title', 'note', 'thumbnail_preview')
     readonly_fields = ('thumbnail_preview',)
+
+    @staticmethod
+    def note(obj):
+        return obj.note
 
     def thumbnail_preview(self, obj):
         return obj.thumbnail_preview
@@ -45,10 +49,16 @@ class BadgeAdmin(admin.ModelAdmin):
 admin.site.register(Badge, BadgeAdmin)
 
 
-# FavoriteHike
-class FavoriteHikeAdmin(admin.ModelAdmin):
+# UserHike
+class UserHikeAdmin(admin.ModelAdmin):
     list_display = ('user','hike')
 
-admin.site.register(FavoriteHike, FavoriteHikeAdmin)
+admin.site.register(UserHike, UserHikeAdmin)
 
+
+# UserBadge
+class UserBadgeAdmin(admin.ModelAdmin):
+    list_display = ('user','badge')
+
+admin.site.register(UserBadge, UserBadgeAdmin)
 

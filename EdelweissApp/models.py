@@ -9,6 +9,7 @@ from django.utils.deconstruct import deconstructible
 import os
 import re
 import sys
+from pprint import pprint
 
 @deconstructible
 class PathAndRename(object):
@@ -18,8 +19,6 @@ class PathAndRename(object):
 
     def __call__(self, instance, filename):
         ext = filename.split('.')[-1]
-        print(filename, file=sys.stderr)
-        print(instance, file=sys.stderr)
         # get filename
         if instance.pk:
             filename = '{}.{}'.format(instance.pk, ext)
@@ -74,6 +73,10 @@ class Hike(models.Model):
     thumbnail = models.ImageField(upload_to='img/hikes/', default='', blank=True)
 
     @property
+    def note(self):
+        return str((UserHike.objects.filter(hike=self.id).aggregate(models.Avg('note'))).get('note__avg'))
+
+    @property
     def thumbnail_preview(self):
         if self.thumbnail:
             return mark_safe('<img src="{}" width="300" height="300" />'.format(self.thumbnail.url))
@@ -113,6 +116,9 @@ class PointsOfInterest(models.Model):
             self.thumbnail.storage.delete(self.thumbnail.name)
         super(PointsOfInterest, self).delete(*args, **kwargs)
 
+    def __str__(self):
+        return self.title
+
 # Modèle Badges
 class Badge(models.Model):
     title = models.CharField(max_length=200)
@@ -131,17 +137,31 @@ class Badge(models.Model):
         self.thumbnail.storage.delete(self.thumbnail.name)
         super(Badge, self).delete(*args, **kwargs)
 
+    def __str__(self):
+        return self.title
+
 # Extension du modèle User
 class Hiker(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     xp = models.IntegerField(default=0)
 
-# Modèle Randonnée Favorite
-class FavoriteHike(models.Model):
+# Modèle User / Randonnée
+class UserHike(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, verbose_name='User')
     hike = models.ForeignKey(Hike, on_delete=models.CASCADE, null=True, verbose_name='Hike')
+    favorite = models.BooleanField(default=False)
+    performed = models.BooleanField(default=False)
+    note = models.IntegerField(choices=list([(x, x) for x in range(6)]), blank=True, null=True)
 
-# Modèle Randonnée Effectuée
-class PerformedHike(models.Model):
+    class Meta:
+        verbose_name = 'Hike and User'
+        verbose_name_plural = 'Hikes and Users'
+
+class UserBadge(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, verbose_name='User')
-    hike = models.ForeignKey(Hike, on_delete=models.CASCADE, null=True, verbose_name='Hike')
+    badge = models.ForeignKey(Badge, on_delete=models.CASCADE, null=True, verbose_name='Badge')
+    performed = models.IntegerField(default=0)
+
+    class Meta:
+        verbose_name = 'Badge and User'
+        verbose_name_plural = 'Badges and Users'
